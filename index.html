@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>DND</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/URI.js/1.19.1/URI.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css?family=Open+Sans:400,700');
+        html, body {margin: 0; padding: 0; height: 100vh; width: 100vw;}
+        .widget {
+            height: 100%;
+            width: 100%;
+            font-family: 'Open Sans', sans-serif;
+            color: #232323;
+        }
+        .widget>.header {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-content: center;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            border-bottom: 1px solid hsla(0, 0%, 0%, 0.2);
+            height: 24px;
+            line-height: 18px;
+        }
+        .widget>.header>.title {
+            font-size: 16px;
+            padding: 0 8px;
+            line-height: 24px;
+        }
+        .widget>.header>.pill {
+            display: inline-block;
+            margin: .25em;
+            font-size: 12px;
+            border-radius: 3px;
+            padding: 0 5px;
+            background-color: rgba(0,0,0,.1);
+            line-height: inherit;
+        }
+        .widget>.content {
+            height: 100%;
+            width: 100%;
+            text-align: center;
+            line-height: 100vh;
+            font-size: 54px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .widget.shut-up {
+            background: #8940C4;
+            color: #fff;
+        }
+        .widget.shut-up>.header {
+            border-color: hsla(0, 0%, 1000%, 0.2);
+        }
+        body::after {content: "DON'T SHUT UP";}
+        body.shut-up::after {content: 'SHUT UP';}
+    </style>
+</head>
+<body>
+    <div class="widget">
+        <div class="header">
+            <div class="title">Status</div>
+            <div class="pill">∞</div>
+        </div>
+        <div class="content">
+            ?
+        </div>
+    </div>
+    <script>
+        String.prototype.format = function () {
+            str = this;
+            for (k in arguments) {
+                str = str.replace("{" + k + "}", arguments[k])
+            }
+            return str;
+        }
+        Number.prototype.between = function (a, b) {
+            var min = Math.min.apply(Math, [a, b]),
+                max = Math.max.apply(Math, [a, b]);
+            return this > min && this < max;
+        };
+        Date.prototype.addHours = function (h) {
+            this.setTime(this.getTime() + (h*60*60*1000));
+            return this;
+        }
+        Date.prototype.setOClock = function () {
+            this.setHours(this.getHours(), 0, 0, 0);
+            return this;
+        }
+    </script>
+    <script>
+        const widget = document.querySelector('.widget');
+        const content = widget.querySelector('.content');
+        const pill = widget.querySelector('.pill');
+
+        const uri = URI.parseQuery(URI(window.location.href).query());
+        let startingHours = [].concat((uri.start) || [13, 15]).map(Number).sort();
+        let durations = [].concat((uri.duration) || [2]).map(Number).sort();
+
+        let intervals = startingHours.map(function (h, i) {
+            return [h, h + (durations[i] || durations[0])]
+        });
+
+        function inInterval(n) {
+            return function (interval) {
+                return n.between(interval[0], interval[1]);
+            }
+        }
+
+        function msToTime(ms) {
+          return {
+              h: ms/3.6e6 | 0,
+              m: (ms%3.6e6)/6e4 | 0
+          }
+        }
+
+        function updateTimer(now, untilHour) {
+            let hourDiff = untilHour - now.getHours();
+
+            if(hourDiff < 0)
+                hourDiff = 24 - now.getHours() + untilHour;
+
+            const end = new Date().addHours(hourDiff).setOClock();
+            const diff = msToTime(end - now + 60 * 1000); // +1 min
+
+            let pillText = (diff.h > 0 ? '{0}h'.format(diff.h) : '');
+            pillText += '{0}m'.format(diff.m);
+            pill.innerHTML = pillText;
+            document.title = '{0} for {1}'.format(
+                content.innerHTML,
+                pillText
+            );
+        }
+
+        function findNextDndHour(now) {
+            const nextIntervalStart = startingHours[
+                startingHours.findIndex(function (h) {
+                    return h > now.getHours();
+                })
+            ];
+
+            return(nextIntervalStart || startingHours[0])
+        }
+
+        setInterval(function () {
+            const now = new Date();
+            const index = intervals.findIndex(inInterval(now.getHours()));
+            const interval = intervals[index];
+
+            content.innerHTML = (interval ? 'Shut up' : 'Don\'t shut up');
+            widget.classList.toggle('shut-up', interval !== undefined);
+
+            updateTimer(now, interval ? interval[1] : findNextDndHour(now));
+        }, 1000);
+    </script>
+</body>
+</html>
