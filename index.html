@@ -118,7 +118,7 @@
           }
         }
 
-        function textToSpeech(text) {
+        function textToSpeech(text, callback) {
             const msg = new SpeechSynthesisUtterance();
             msg.voiceURI = "native";
             msg.volume = 1;
@@ -126,6 +126,8 @@
             msg.pitch = 0.8;
             msg.text = text;
             msg.lang = 'en-US';
+            if(typeof(callback) === "function") msg.onend = callback;
+
             speechSynthesis.speak(msg);
         }
 
@@ -141,6 +143,34 @@
             setTimeout(function () {
                 textToSpeech('Please, {0}'.format(content.innerHTML));
             }, airhorn.duration * 1000);
+        }
+
+        function tellMeSomething() {
+            /*
+             * If by any means this results to be buggy at least I don't want it
+             * to make noise outside office hours :)
+            */
+            if(!new Date().getHours().between(10, 18))
+                return false;
+
+            let newXHR = new XMLHttpRequest();
+
+            newXHR.addEventListener( 'load', function () {
+                response = JSON.parse(this.response);
+                textToSpeech(response.setup, function () {
+                    setTimeout(
+                        function () {
+                            textToSpeech(response.punchline, function () {
+                                badumtss.play()
+                            })
+                        },
+                        1000
+                    )
+                });
+            });
+
+            newXHR.open( 'GET', 'https://08ad1pao69.execute-api.us-east-1.amazonaws.com/dev/random_joke' );
+            newXHR.send();
         }
 
         function updateTimer(now, untilHour) {
@@ -175,6 +205,7 @@
         const content = widget.querySelector('.content');
         const pill = widget.querySelector('.pill');
         const airhorn = new Audio('airhorn.mp3');
+        const badumtss = new Audio('badumtss.mp3');
 
         const uri = URI.parseQuery(URI(window.location.href).query());
         let startingHours = [].concat((uri.start) || [13, 15]).map(Number).sort();
@@ -205,6 +236,10 @@
 
             updateTimer(now, interval ? interval[1] : findNextDndHour(now));
         }, 1000);
+
+        setInterval(function () {
+            tellMeSomething();
+        }, 60 * 60 * 1000);
     </script>
 </body>
 </html>
