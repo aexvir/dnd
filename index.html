@@ -70,8 +70,6 @@
         .widget.shut-up>.header>.pill {
             color: #fff;
         }
-        body::after {content: "DON'T SHUT UP";}
-        body.shut-up::after {content: 'SHUT UP';}
     </style>
 </head>
 <body>
@@ -234,7 +232,7 @@
             const index = intervals.findIndex(inInterval(now.getHours()));
             const interval = intervals[index];
 
-            content.innerHTML = (interval ? 'Shut up' : 'Don\'t shut up');
+            content.innerHTML = (interval ? 'Shut up' : 'Do not shut up');
             widget.classList.toggle('shut-up', interval !== undefined);
 
             updateTimer(now, interval ? interval[1] : findNextDndHour(now));
