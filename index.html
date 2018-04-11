@@ -214,6 +214,9 @@
         let startingHours = [].concat((uri.start) || [13, 15]).map(Number).sort();
         let durations = [].concat((uri.duration) || [2]).map(Number).sort();
 
+        if('jokeonstart' in uri)
+            tellMeSomething();
+
         let intervals = startingHours.map(function (h, i) {
             return [h, Math.min(h + (durations[i] || durations[0]), 24)]
         });
