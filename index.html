@@ -128,6 +128,7 @@
             msg.lang = 'en-US';
             if(typeof(callback) === "function") msg.onend = callback;
 
+            console.log('synth: {0}'.format(text).replace(/\n|\r/g, ' '));
             speechSynthesis.speak(msg);
         }
 
@@ -151,8 +152,9 @@
         }
 
         function tellMeSomething(unsafe) {
-            if(!isSafeToPlaySound())
-            return false;
+            // Jokes not allowed during shut up
+            if(!isSafeToPlaySound() || widget.classList.contains('shut-up'))
+                return false;
 
             let newXHR = new XMLHttpRequest();
 
@@ -165,7 +167,7 @@
                                 badumtss.play()
                             })
                         },
-                        1000
+                        1500
                     )
                 });
             });
@@ -215,7 +217,9 @@
         let durations = [].concat((uri.duration) || [2]).map(Number).sort();
 
         if('jokeonstart' in uri)
-            tellMeSomething();
+            setTimeout(function () {
+                tellMeSomething();
+            }, 5000);
 
         let intervals = startingHours.map(function (h, i) {
             return [h, Math.min(h + (durations[i] || durations[0]), 24)]
