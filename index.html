@@ -2,6 +2,8 @@
 <html>
 <head>
     <meta charset="utf-8" />
+    <meta name="author" content="Alex Viscreanu <alexviscreanu@gmail.com>">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Do not disturb</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/URI.js/1.19.1/URI.min.js"></script>
     <style>
@@ -131,12 +133,12 @@
             speechSynthesis.speak(msg);
         }
 
-        function announceChange() {
+        function announceChange(safe) {
             /*
              * If by any means this results to be buggy at least I don't want it
              * to make noise outside office hours :)
             */
-            if(!new Date().getHours().between(10, 18))
+            if(safe || !new Date().getHours().between(10, 18))
                 return false;
 
             airhorn.play();
@@ -145,12 +147,12 @@
             }, airhorn.duration * 1000);
         }
 
-        function tellMeSomething() {
+        function tellMeSomething(safe) {
             /*
              * If by any means this results to be buggy at least I don't want it
              * to make noise outside office hours :)
             */
-            if(!new Date().getHours().between(10, 18))
+            if(safe || !new Date().getHours().between(10, 18))
                 return false;
 
             let newXHR = new XMLHttpRequest();
@@ -208,6 +210,7 @@
         const badumtss = new Audio('badumtss.mp3');
 
         const uri = URI.parseQuery(URI(window.location.href).query());
+        const safeMode = 'safe' in uri;
         let startingHours = [].concat((uri.start) || [13, 15]).map(Number).sort();
         let durations = [].concat((uri.duration) || [2]).map(Number).sort();
 
@@ -216,7 +219,7 @@
         });
 
         const silenceStatusObserver = new MutationObserver(function() {
-            announceChange();
+            announceChange(safeMode);
         });
 
         silenceStatusObserver.observe(widget, {
@@ -238,7 +241,7 @@
         }, 1000);
 
         setInterval(function () {
-            tellMeSomething();
+            tellMeSomething(safeMode);
         }, 60 * 60 * 1000);
     </script>
 </body>
