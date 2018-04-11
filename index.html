@@ -131,12 +131,17 @@
             speechSynthesis.speak(msg);
         }
 
-        function announceChange(safe) {
+        function isSafeToPlaySound() {
             /*
              * If by any means this results to be buggy at least I don't want it
-             * to make noise outside office hours :)
+             * to make noise outside office hours :) unless unsafe mode ;)
             */
-            if(safe || !new Date().getHours().between(10, 18))
+            const onWorkingHours = new Date().getHours().between(10, 18);
+            return(unsafeMode || (!safeMode && onWorkingHours));
+        }
+
+        function announceChange() {
+            if(!isSafeToPlaySound())
                 return false;
 
             airhorn.play();
@@ -145,13 +150,9 @@
             }, airhorn.duration * 1000);
         }
 
-        function tellMeSomething(safe) {
-            /*
-             * If by any means this results to be buggy at least I don't want it
-             * to make noise outside office hours :)
-            */
-            if(safe || !new Date().getHours().between(10, 18))
-                return false;
+        function tellMeSomething(unsafe) {
+            if(!isSafeToPlaySound())
+            return false;
 
             let newXHR = new XMLHttpRequest();
 
@@ -209,6 +210,7 @@
 
         const uri = URI.parseQuery(URI(window.location.href).query());
         const safeMode = 'safe' in uri;
+        const unsafeMode = 'unsafe' in uri && !safeMode;
         let startingHours = [].concat((uri.start) || [13, 15]).map(Number).sort();
         let durations = [].concat((uri.duration) || [2]).map(Number).sort();
 
@@ -217,7 +219,7 @@
         });
 
         const silenceStatusObserver = new MutationObserver(function() {
-            announceChange(safeMode);
+            announceChange();
         });
 
         silenceStatusObserver.observe(widget, {
@@ -239,7 +241,7 @@
         }, 1000);
 
         setInterval(function () {
-            tellMeSomething(safeMode);
+            tellMeSomething();
         }, 60 * 60 * 1000);
     </script>
 </body>
