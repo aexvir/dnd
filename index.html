@@ -214,7 +214,7 @@
         const safeMode = 'safe' in uri;
         const unsafeMode = 'unsafe' in uri && !safeMode;
         let startingHours = [].concat((uri.start) || [13, 15]).map(Number).sort();
-        let durations = [].concat((uri.duration) || [2]).map(Number).sort();
+        let durations = [].concat((uri.duration) || [1]).map(Number).sort();
 
         if('jokeonstart' in uri)
             setTimeout(function () {
